@@ -95,7 +95,10 @@
       integer, parameter, public :: NF_VGAS = 10     ! number of gas species
       integer, parameter         :: IMXCO2  = 24     ! input co2 data lon points
       integer, parameter         :: JMXCO2  = 12     ! input co2 data lat points
-      integer, parameter         :: MINYEAR = 2017   ! earlist year 2-d co2 data
+!      integer, parameter         :: MINYEAR = 2017   ! earlist year 2-d co2 data
+                                                     ! available
+
+      integer, parameter         :: MINYEAR = 1959   ! earlist year 2-d co2 data     
                                                      ! available
 
       real (kind=kind_phys), parameter :: resco2=15.0         ! horiz res in degree
@@ -226,13 +229,16 @@
       real (kind=kind_phys):: n2og1,ch4g1,f11g1,f12g1,f22g1,cl4g1,f113g1
       integer    :: i, iyr, imo, iyr1, iyr2, jyr, idyr
       logical    :: file_exist, lextpl
-      character  :: cline*100, cform*8, cfile0*26, cfile1*26,           &
+!      character  :: cline*100, cform*8, cfile0*26, cfile1*26,           &
+      character  :: cline*100, cform*8, cfile0*34, cfile1*34,           &
      &              cfuser*26, cfmcyc*26
 
       data  cfuser / 'co2userdata.txt           ' /
       data  cfmcyc / 'co2monthlycyc.txt         ' /
-      data  cfile0 / 'co2historicaldata_glob.txt' /
-      data  cfile1 / 'co2historicaldata_2004.txt' /
+!      data  cfile0 / 'co2historicaldata_glob.txt' /
+!      data  cfile1 / 'co2historicaldata_2004.txt' /
+      data  cfile0 / 'co2_fix/co2historicaldata_glob.txt' /
+      data  cfile1 / 'co2_fix/co2historicaldata_2004.txt' /
       data  cform  / '(24f7.2)' /       !! data format in IMXCO2*f7.2
 
 !===>  ...  begin here
@@ -386,7 +392,9 @@
             endif
           else                             ! use historical observed data
             cfile1 = cfile0
-            write(cfile1(19:22),34) idyr
+!            write(cfile1(19:22),34) idyr
+
+            write(cfile1(27:30),34) idyr
 
             if ( me == 0 ) then
               print *,' - Using Historical Co2 Data Table'
@@ -424,7 +432,9 @@
 
               Lab_dowhile2 : do while ( iyr >= MINYEAR )
                 iyr = iyr - 1
-                write(cfile1(19:22),34) iyr
+!                write(cfile1(19:22),34) iyr
+
+                write(cfile1(27:30),34) iyr
 
                 inquire (file=cfile1, exist=file_exist)
                 if ( me == 0 ) then
@@ -454,7 +464,7 @@
           read (NICO2CN, 36) iyr, cline, co2g1, co2g2
   36      format(i4,a94,f7.2,16x,f5.2)
 !Roxy rate
-	  co2g2 = co2g2 * 0 + 4
+!	  co2g2 = co2g2 * 0 + 4               
           if ( me == 0 ) then
             print *,'   Opened co2 data file: ',cfile1
             print *, iyr, cline(1:94), co2g1,'  GROWTH RATE =', co2g2
@@ -462,7 +472,9 @@
 
 !  --- ...  add growth rate if needed
           if ( lextpl ) then
-           rate = co2g2 * (iyear - iyr)   ! rate from early year
+
+           rate = co2g2 * 0 
+!           rate = co2g2 * (iyear - iyr)   ! rate from early year
 !           rate = 1.60  * (iyear - iyr)   ! avg rate over long period
 !            rate = 1.00  * (iyear - iyr)   ! avg rate for recent period
 !            rate = -1.00  * (iyear - iyr)   ! avg rate for CO2 decrease testing --Roxy 
@@ -471,7 +483,10 @@
             rate = 0.0
           endif
 
+           co2_glb = (co2g1 + rate ) * 1.0e-6
+
           if ( me == 0 ) then
+            print *,'   rate= ',rate     
             print *,'   Global annual mean CO2 data for year',          &
      &              iyear, co2_glb
           endif
