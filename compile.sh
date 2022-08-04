@@ -263,3 +263,18 @@ make -j $npes
 echo "#--------------------------------------------------------------------------------"
 
 
+echo "#-------------------------MAKE sfc_ini_surface--------------------------------------"
+cppDefs="-Duse_netCDF -Duse_libMPI -Dlib_xgrid -DENABLE_ODA -Dfms_interp" # -Dtest_interp"
+execname="sfc_ini_surface.exe"
+libsrc="gfs/sfc_ini_surface"
+SRC="$SRCDIR/$libsrc"
+paths="$SRC"
+builddir=$EXECDIR/$libsrc
+export LD=$FC
+mkdir -p $builddir
+cd $builddir
+OPTS="-I$INC_GFSIO -I$INC_BACIO -I$INC_W3NCO -I$INC_W3EMC -I$INC_FMS_GFS"
+LIBS="$LIB_GFSIO $LIB_BACIO $LIB_W3EMC $LIB_W3NCO $LIB_FMS_GFS"
+$MKMF -c "$cppDefs" -f -p ${execname} -t $MKMFTEMPLATE -o "$OPTS" -l "$LIBS"  $paths
+make -j $npes
+echo "#--------------------------------------------------------------------------------"
