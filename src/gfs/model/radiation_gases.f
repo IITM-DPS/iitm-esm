@@ -95,11 +95,9 @@
       integer, parameter, public :: NF_VGAS = 10     ! number of gas species
       integer, parameter         :: IMXCO2  = 24     ! input co2 data lon points
       integer, parameter         :: JMXCO2  = 12     ! input co2 data lat points
-!      integer, parameter         :: MINYEAR = 2017   ! earlist year 2-d co2 data
-                                                     ! available
-
-      integer, parameter         :: MINYEAR = 1959   ! earlist year 2-d co2 data     
-                                                     ! available
+!!!!!edit by Dr. Rashmi Kakatkar : MINYEAR is not fixed in this updated
+!code. But this will be provided in gfs_namelist as mnyear.
+      integer         :: MINYEAR = 1950   
 
       real (kind=kind_phys), parameter :: resco2=15.0         ! horiz res in degree
       real (kind=kind_phys), parameter :: raddeg=180.0/con_pi ! rad->deg conversion
@@ -171,7 +169,8 @@
 !...................................
 
 !  ---  inputs:
-     &     ( iyear, month, ICTM, ICO2, me )
+!!!!!edit by Dr. Rashmi Kakatkar  : MNYEAR is added in this input
+     &     ( iyear, month, ICTM, ICO2, me, MNYEAR )
 !  ---  outputs: ( none )
 
 !  ===================================================================  !
@@ -219,7 +218,8 @@
       implicit none
 
 !  ---  inputs:
-      integer, intent(in) :: iyear, month, ICTM, ICO2, me
+!!!!!edit by Dr. Rashmi Kakatkar  : MNYEAR is added in input
+      integer, intent(in) :: iyear, month, ICTM, ICO2, me, MNYEAR
 
 !  ---  output: ( none )
 
@@ -230,6 +230,8 @@
       integer    :: i, iyr, imo, iyr1, iyr2, jyr, idyr
       logical    :: file_exist, lextpl
 !      character  :: cline*100, cform*8, cfile0*26, cfile1*26,           &
+!!!!!edit by Dr. Rashmi Kakatkar   cfile0 and cfile1 paths are changed
+!hence accordingly this number
       character  :: cline*100, cform*8, cfile0*34, cfile1*34,           &
      &              cfuser*26, cfmcyc*26
 
@@ -237,13 +239,24 @@
       data  cfmcyc / 'co2monthlycyc.txt         ' /
 !      data  cfile0 / 'co2historicaldata_glob.txt' /
 !      data  cfile1 / 'co2historicaldata_2004.txt' /
-      data  cfile0 / 'co2_fix/co2historicaldata_glob.txt' /
-      data  cfile1 / 'co2_fix/co2historicaldata_2004.txt' /
+!!!!!edit by Dr. Rashmi Kakatkar : ghg data is inside gfs_fix folder and
+!filenames are also changed 
+      data  cfile0 / 'ghg_fix/ghgforcingdecadal_glob.txt' /
+      data  cfile1 / 'ghg_fix/ghgforcingdecadal_2004.txt' /
       data  cform  / '(24f7.2)' /       !! data format in IMXCO2*f7.2
 
 !===>  ...  begin here
 
+!!!!!edit by Dr. Rashmi Kakatkar   : MNYEAR from gfs_namelist is
+!provided here to MINYEAR instead of fixing it initially in this code 
+      MINYEAR = MNYEAR
       ico2flg = ICO2
+
+!!!!!edit by Dr. Rashmi Kakatkar : Print to check whether mnyear is
+!correctly read
+       if ( me == 0 ) then
+          print *,' MINYEAR=',   MINYEAR
+        endif
 
       if ( ICO2 == 0 ) then
 !  --- ...  use prescribed global mean co2 data
@@ -394,6 +407,7 @@
             cfile1 = cfile0
 !            write(cfile1(19:22),34) idyr
 
+!!!!!edit by Dr. Rashmi Kakatkar  : as per new path of ghg data
             write(cfile1(27:30),34) idyr
 
             if ( me == 0 ) then
@@ -434,6 +448,7 @@
                 iyr = iyr - 1
 !                write(cfile1(19:22),34) iyr
 
+!!!!!edit by Dr. Rashmi Kakatkar : as per new path of ghg data
                 write(cfile1(27:30),34) iyr
 
                 inquire (file=cfile1, exist=file_exist)
@@ -465,6 +480,9 @@
   36      format(i4,a94,f7.2,16x,f5.2)
 !Roxy rate
 !	  co2g2 = co2g2 * 0 + 4               
+!!!!!edit by Dr. Rashmi Kakatkar : co2 data will be provided using cmip
+!forcing data and hence rate is not considered for decadal hindcasts.
+!Rate is set as zero 
           if ( me == 0 ) then
             print *,'   Opened co2 data file: ',cfile1
             print *, iyr, cline(1:94), co2g1,'  GROWTH RATE =', co2g2
@@ -473,6 +491,8 @@
 !  --- ...  add growth rate if needed
           if ( lextpl ) then
 
+!!!!!edit by Dr. Rashmi Kakatkar  : rate is set as zero as per forcing
+!for decadal hindcasts
            rate = co2g2 * 0 
 !           rate = co2g2 * (iyear - iyr)   ! rate from early year
 !           rate = 1.60  * (iyear - iyr)   ! avg rate over long period
@@ -483,8 +503,10 @@
             rate = 0.0
           endif
 
+!!!!!edit by Dr. Rashmi Kakatkar  : update in code for monthly co2 input
            co2_glb = (co2g1 + rate ) * 1.0e-6
 
+!!!!!edit by Dr. Rashmi Kakatkar  : print rate to check its value
           if ( me == 0 ) then
             print *,'   rate= ',rate     
             print *,'   Global annual mean CO2 data for year',          &

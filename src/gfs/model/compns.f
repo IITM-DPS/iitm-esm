@@ -90,6 +90,8 @@
 csela - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 c     if output (fhout) more frequently than zeroing ,get partial rains
  
+!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
+!update in radiation_gases.f code )
       namelist /nam_mrf/FHMAX,FHOUT,FHZER,FHSEG,DELTIM,IGEN,
      & NGPTC,fhswr,fhlwr,fhcyc,ras,LDIAG3D,
      & shuff_lats_a,shuff_lats_r,reshuff_lats_a,reshuff_lats_r,
@@ -102,10 +104,14 @@ c     if output (fhout) more frequently than zeroing ,get partial rains
      & ncw, crtrh,old_monin,flgmin,gfsio_in,gfsio_out,ref_temp,cnvgwd,
      & ccwf,sashal,newsas,zflxtvd,crick_proof,ccnorm,ctei_rm,mom4ice,
      & norad_precip,num_reduce,mstrat,trans_trac,bkgd_vdif,climate,
-     & do_filter, is_first_time, restart_interval
+     & do_filter, is_first_time, restart_interval,
+     & mnyear
 !
       num_reduce = -4
 !
+!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
+!update in radiation_gases.f code )
+      mnyear   = 1950
       fhmax    = 0
       fhout    = 0
       restart_interval    = 0

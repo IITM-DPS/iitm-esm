@@ -350,11 +350,13 @@
         initialized=.true.
       end subroutine init_grrad
 
+!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
+!update in radiation_gases.f code )
       subroutine radinit                                                &
 !  ---  inputs:
      &     ( si, NLAY, iflip, idate, jdate, ICTM, ISOL, ICO2,           &
      &       IAER, IALB, IEMS, ICWP, NP3D, isubcsw, isubclw,            &
-     &       iovrsw, iovrlw, me )
+     &       iovrsw, iovrlw, me, MNYEAR )
 
 ! =================   subprogram documentation block   ================ !
 !                                                                       !
@@ -442,9 +444,11 @@
 !
       implicit none
 
+!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
+!update in radiation_gases.f code )
       integer, intent(in) :: NLAY, iflip, NP3D, ICTM, ISOL, ICO2, ICWP, &
      &                       IALB, IEMS, IAER, me, isubcsw, isubclw,    &
-     &                       iovrsw, iovrlw
+     &                       iovrsw, iovrlw, MNYEAR
       integer, intent(in) :: idate(:), jdate(:)
 
       real (kind=kind_phys), intent(in) :: si(:)
@@ -478,10 +482,13 @@
         if (me == 0) then
           print *,' NEW RADIATION PROGRAM STRUCTURES BECAME OPER. ',    &
      &            '  May 01 2007'
+!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
+!update in radiation_gases.f code )
           print *,' - Selected Control Flag settings: ICTM=',ictm,      &
      &            ' ISOL=',isol,' ICO2=',ico2,' NP3D=',np3d,' ICWP=',   &
      &            icwp,' IALB=',ialb,' IEMS=',iems,' IAER=',iaer,       &
-     &            ' ISUBC_LW=',isubclw,' ISUBC_SW=',isubcsw
+     &            ' ISUBC_LW=',isubclw,' ISUBC_SW=',isubcsw,            &
+     &            ' MNYEAR=',mnyear 
 
           if ( ICTM==0 .or. ICTM==-2 ) then
             print *,'   Data usage is limited by initial condition ',   &
@@ -542,7 +549,9 @@
       if ( monthd /= imdat ) then
         monthd = imdat
 
-        call gasinit ( iydat, imdat, ICTM, ICO2, me )
+!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
+!update in radiation_gases.f code )
+        call gasinit ( iydat, imdat, ICTM, ICO2, me, MNYEAR )
 
         prnco2 = .true.
       else

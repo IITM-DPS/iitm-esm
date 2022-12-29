@@ -338,11 +338,13 @@ module gloopr_mod
     dtsw  = 3600.0 * fhswr
     dtlw  = 3600.0 * fhlwr
   
+!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
+!update in radiation_gases.f code )
     call radinit                                                      &
     !  ---  input:
              ( si_loc, levr, iflip, idat, jdat, ictm, isol, ico2,         &
                iaer, ialb, iems, icwp, num_p3d, isubc_sw, isubc_lw,       &
-               iovr_sw, iovr_lw, me )
+               iovr_sw, iovr_lw, me, mnyear )
     !  ---  output: ( none )
   
   
