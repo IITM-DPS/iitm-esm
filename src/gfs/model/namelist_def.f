@@ -24,7 +24,7 @@
 !
       logical norad_precip
       integer isol, ico2, ialb, iems, iaer, iovr_sw, iovr_lw, ictm
-!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
+!!!!! edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
 !update in radiation_gases.f code )
       integer mnyear
       integer isubc_sw, isubc_lw

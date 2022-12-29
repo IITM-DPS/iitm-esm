@@ -350,7 +350,7 @@
         initialized=.true.
       end subroutine init_grrad
 
-!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
+!!!!! edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
 !update in radiation_gases.f code )
       subroutine radinit                                                &
 !  ---  inputs:
