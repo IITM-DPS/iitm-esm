@@ -95,7 +95,7 @@
       integer, parameter, public :: NF_VGAS = 10     ! number of gas species
       integer, parameter         :: IMXCO2  = 24     ! input co2 data lon points
       integer, parameter         :: JMXCO2  = 12     ! input co2 data lat points
-x!!!!! edit by Dr. Rashmi Kakatkar : MINYEAR is not fixed in this updated
+!!!!! edit by Dr. Rashmi Kakatkar : MINYEAR is not fixed in this updated
 !code. But this will be provided in gfs_namelist as mnyear.
       integer         :: MINYEAR = 1950   
 
