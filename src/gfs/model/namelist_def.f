@@ -24,8 +24,9 @@
 !
       logical norad_precip
       integer isol, ico2, ialb, iems, iaer, iovr_sw, iovr_lw, ictm
-!!!!! edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
-!update in radiation_gases.f code )
-      integer mnyear
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! mnyear added for ghg update (i.e. update in radiation_gases.f code )
+!! new option for solar constant frequency ( isolf ) is added
+      integer mnyear, isolf
       integer isubc_sw, isubc_lw
       end module namelist_def

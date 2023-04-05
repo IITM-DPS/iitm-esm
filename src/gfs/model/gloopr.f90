@@ -157,6 +157,12 @@ module gloopr_mod
     !  ---  isol controls solar constant data source
     !!    integer, parameter :: isol = 0   ! use prescribed solar constant
     !     integer, parameter :: isol = 1   ! use varying solar const with 11-yr cycle
+
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! new option for solar constant frequency ( isolf ) is added
+    !  ---  isolf controls solar constant data frequency
+    !!    integer, parameter :: isolf = 1   ! use yearly varying solar constant
+    !     integer, parameter :: isolf = 2   ! use monthly varying solar constant
   
     !  ---  ico2 controls co2 data source for radiation
     !     integer, parameter :: ico2 = 0   ! prescribed global mean value (old opernl)
@@ -338,13 +344,15 @@ module gloopr_mod
     dtsw  = 3600.0 * fhswr
     dtlw  = 3600.0 * fhlwr
   
-!!!!! edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
-!update in radiation_gases.f code )
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! mnyear added for ghg update (i.e. update in radiation_gases.f code )
+!! new option for solar constant frequency ( isolf ) is added
+
     call radinit                                                      &
     !  ---  input:
              ( si_loc, levr, iflip, idat, jdat, ictm, isol, ico2,         &
                iaer, ialb, iems, icwp, num_p3d, isubc_sw, isubc_lw,       &
-               iovr_sw, iovr_lw, me, mnyear )
+               iovr_sw, iovr_lw, me, mnyear, isolf )
     !  ---  output: ( none )
   
   

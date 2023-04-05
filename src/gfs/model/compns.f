@@ -90,8 +90,9 @@
 csela - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 c     if output (fhout) more frequently than zeroing ,get partial rains
  
-!!!!! edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
-!update in radiation_gases.f code )
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! mnyear added for ghg update (i.e update in radiation_gases.f code )
+!! new option for solar constant frequency ( isolf ) is added
       namelist /nam_mrf/FHMAX,FHOUT,FHZER,FHSEG,DELTIM,IGEN,
      & NGPTC,fhswr,fhlwr,fhcyc,ras,LDIAG3D,
      & shuff_lats_a,shuff_lats_r,reshuff_lats_a,reshuff_lats_r,
@@ -105,12 +106,13 @@ c     if output (fhout) more frequently than zeroing ,get partial rains
      & ccwf,sashal,newsas,zflxtvd,crick_proof,ccnorm,ctei_rm,mom4ice,
      & norad_precip,num_reduce,mstrat,trans_trac,bkgd_vdif,climate,
      & do_filter, is_first_time, restart_interval,
-     & mnyear
+     & mnyear, isolf
 !
       num_reduce = -4
 !
-!!!!!edit by Dr. Rashmi Kakatkar : mnyear added for ghg update (i.e
-!update in radiation_gases.f code )
+!!!!!edit by Dr. Rashmi Kakatkar : 
+!! mnyear added for ghg update (i.e update in radiation_gases.f code )
+!! new option for solar constant frequency ( isolf ) is added
       mnyear   = 1950
       fhmax    = 0
       fhout    = 0
@@ -178,6 +180,7 @@ c     if output (fhout) more frequently than zeroing ,get partial rains
       levr    = 0
 !     Default values for some radiation controls
       isol    = 0         ! use prescribed solar constant
+      isolf   = 1         ! solar constant frequency
       ico2    = 0         ! prescribed global mean value (old opernl)
 !     ialb    = 0         ! use climatology alb, based on sfc type
       ialb    = 1         ! use modis based alb
