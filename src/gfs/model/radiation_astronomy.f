@@ -9,7 +9,7 @@
 !                                                                      !
 !      'solinit'    -- read in solar constant                          !
 !         input:                                                       !
-!           ( ISOL, iyear, iydat, me )                                 !
+!           ( ISOL, iyear, iydat, me, month, ISOLF )                   !
 !         output:                                                      !
 !           ( none )                                                   !
 !                                                                      !
@@ -36,7 +36,9 @@
 !     feb-15-2006  ---  yu-tai hou      add 11-yr solar constant cycle !
 !     mar-19-2009  ---  yu-tai hou      modified solinit for climate   !
 !                       hindcast situation.                            !
-!                                                                      !
+!        2023      --- Dr. Rashmi Kakatkar - added the ISOLF option for!
+!                     freqency of solar constant data                  !
+!                     ISOLF=1 for yearly and ISOLF=2 for monthly data  !
 !!!!!  ==========================================================  !!!!!
 !!!!!                       end descriptions                       !!!!!
 !!!!!  ==========================================================  !!!!!
@@ -74,8 +76,12 @@
       subroutine solinit                                                &
 !...................................
 
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! new option for solar constant frequency ( isolf ) is added
+!! month and ISOLF is added in input for ISOLF option
+
 !  ---  inputs:
-     &     ( ISOL, iyear, iydat, me )
+     &     ( ISOL, iyear, iydat, me, month, ISOLF )
 !  ---  outputs: ( none )
 
 !  ===================================================================  !
@@ -85,7 +91,13 @@
 !  inputs:                                                              !
 !     ISOL    - =0: use fixed solar constant in "physcon"               !
 !               =1: use 11-year cycle solar constant from table         !
+!!!!! edit by Dr. Rashmi Kakatkar :                                     !
+!! new option for solar constant frequency ( isolf ) is added           !
+!  ---  isolf controls solar constant data frequency                    !
+!    ISOLF    - =1: use yearly varying solar constant                   !
+!               =2: use monthly varying solar constant                  !
 !     iyear   - year of the requested data (for ISOL=1 only)            !
+!     month   - month of the requested data (for ISOL=1 only)           !
 !     iydat   - usually =iyear. if not, it is for hindcast mode, and it !
 !               is usually the init cond time and serves as the upper   !
 !               limit of data can be used.                              !
@@ -108,15 +120,30 @@
 !  ---  input:
       integer,  intent(in) :: ISOL, iyear, iydat, me
 
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! new option for solar constant frequency ( isolf ) is added
+!! month and ISOLF is added in input for ISOLF option
+
+      integer,  intent(in) :: month, ISOLF
+
 !  ---  output: ( none )
 
 !  ---  local:
       real (kind=kind_phys):: smean, solc1
-      integer       :: i, iyr, iyr1, iyr2, jyr
+      integer       :: i, iyr, iyr1, iyr2, jyr, jmn, imn, i1
       logical       :: file_exist
-      character     :: cline*60, cfile0*26
 
-      data  cfile0 / 'solarconstantdata.txt' /
+!!!!!edit by Dr. Rashmi Kakatkar :  cfile0 and cfile1 paths are changed
+! hence accordingly this number
+!      character     :: cline*60, cfile0*26
+      character     :: cline*60, cfile0*47, cfile1*47
+
+!!!!!edit by Dr. Rashmi Kakatkar : solar forcing is inside INPUT/solarforcing folder 
+! and filenames are also changed for decadal hindcasts
+
+!      data  cfile0 / 'solarconstantdata.txt' /
+      data  cfile0 / 'INPUT/solarforcing/solarforcingdecadal_yrmn.txt' /
+      data  cfile1 / 'INPUT/solarforcing/solarforcingdecadal_2000.txt' /
 
 !===>  ...  begin here
 
@@ -144,7 +171,31 @@
      &            ' instead!!'
         endif
       else
+
         iyr = iyear
+
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! month is set as imn for isolf loop
+!! check for year and month of the data
+
+        imn = month
+
+        if ( me == 0 ) then
+          print *,' year =', iyr
+          print *,' month =', imn
+        endif
+
+
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! new option for solar constant frequency ( isolf ) is added
+!!! added if ISOLF block for solar constant frequency check
+
+!!! --- check frequency of solar forcing and read data ----
+      if ( ISOLF == 1 ) then
+
+        if ( me == 0 ) then
+          print *,' - Using yearly solar constant '
+        endif
 
         open (NIRADSF,file=cfile0,form='formatted',status='old')
         rewind NIRADSF
@@ -222,6 +273,12 @@
 !         read (NIRADSF,26) jyr, solc1
 ! 26      format(i4,f8.2)
           read (NIRADSF,*) jyr, solc1
+              if (me == 0) then
+               print *,'i1 = ', i
+               print *,'iyr = ', iyr
+               print *,'jyr = ', jyr
+               endif
+
 
           if ( i == iyr .and. iyr == jyr ) then
             solc0  = smean + solc1
@@ -236,7 +293,79 @@
           endif
         enddo   Lab_dowhile3
 
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! ISOLF==2 ( monthly ) option is added here
+!! for if ISOLF block close file NIRADSF and then start elseif block
+
         close ( NIRADSF )
+
+       elseif ( ISOLF == 2 ) then
+
+!!!set up input data file
+
+        cfile1 = cfile0
+        write(cfile1(40:43),34) iyr
+34      format(i4.4)
+
+               if (me == 0) then
+               print *,'cfile1 ', cfile1
+               endif
+
+!!!Check to see if requested solar data file existed
+        inquire (file=cfile1, exist=file_exist)
+        if ( .not. file_exist ) then
+               if (me == 0) then
+               print *,'solar file does not exist for year' , iyr
+               print *,'**** Stopped in subroutine ASTRONOMY !! '
+               endif
+           stop
+        endif
+
+        open (NIRADSF,file=cfile1,form='formatted',status='old')
+        rewind NIRADSF
+
+        read (NIRADSF, 25) iyr1, smean, cline
+  25    format(i4,f8.2,a60)
+
+              if (me == 0) then
+               print *,'iyr1 = ', iyr1
+               print *,'smean = ', smean
+               endif
+
+!  --- ...  locate the right record month of data
+        i1 = 12
+        Lab_dowhile4 : do while ( i1 >= 1 )
+
+         read (NIRADSF,*) jmn, solc1
+              if (me == 0) then
+               print *,'check for monthly solar constant data read '
+               print *,'i1 = ', i1
+               print *,'imn = ', imn
+               print *,'jmn = ', jmn
+               endif
+
+         if ( i1 == imn .and. imn == jmn ) then
+                if (me == 0) then
+                print *,' imn=jmn= ',jmn
+                endif
+
+            solc0  = smean + solc1
+            if (me == 0) then
+              print *,' CHECK: Solar constant data for month',imn,       &
+     &                 solc1, solc0
+            endif
+            exit Lab_dowhile4
+          else
+
+            i1 = i1 - 1
+          endif
+        enddo   Lab_dowhile4
+
+        close ( NIRADSF )
+
+
+       endif  ! end if_solar frequency block
+
       endif      ! end if_file_exist_block
 
 !
@@ -380,9 +509,14 @@
 
       if (me == 0) then
 
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! print check for new option for solar constant frequency ( isolf ) 
+!! solc0 is added for print
+
         call prtime                                                     &
 !  ---  inputs:
-     &     ( jd, fjd, dlt, alp, r1, slag, solcon                        &
+!     &     ( jd, fjd, dlt, alp, r1, slag, solcon                        &
+     &     ( jd, fjd, dlt, alp, r1, slag, solcon,solc0                  &
 !  ---  outputs: ( none )
      &     )
 
@@ -676,8 +810,13 @@
       subroutine prtime                                                 &
 !...................................
 
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! print check for new option for solar constant frequency ( isolf ) 
+!! solcin is added for print
+
 !  ---  inputs:
-     &     ( jd, fjd, dlt, alp, r1, slag, solc                          &
+!     &     ( jd, fjd, dlt, alp, r1, slag, solc                          &
+     &     ( jd, fjd, dlt, alp, r1, slag, solc, solcin                  &
 !  ---  outputs: ( none )
      &     )
 
@@ -715,6 +854,12 @@
       integer, intent(in) :: jd
 
       real (kind=kind_phys), intent(in) :: fjd, dlt, alp, r1, slag, solc
+
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! print check for new option for solar constant frequency ( isolf ) 
+!! solcin is added for print
+
+      real (kind=kind_phys), intent(in) :: solcin 
 
 !  ---  outputs: ( none )
 
@@ -786,11 +931,23 @@
  102  format('  RADIUS VECTOR',9x,f10.7/'  RIGHT ASCENSION OF SUN',     &
      &       f12.7,' HRS, OR',i4,' HRS',i4,' MINS',f6.1,' SECS')
 
-      print 103, dltd, dsig, ltd, ltm, dlts, eqt, eqsec, slag, solc
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! print check for new option for solar constant frequency ( isolf ) 
+!! solcin is added for print
+
+!      print 103, dltd, dsig, ltd, ltm, dlts, eqt, eqsec, slag, solc
+      print 103, dltd, dsig, ltd, ltm, dlts, eqt, eqsec, slag, solc,    &
+     & solcin
  103  format('  DECLINATION OF THE SUN',f12.7,' DEGS, OR ',a1,i3,       &
      &       ' DEGS',i4,' MINS',f6.1,' SECS'/'  EQUATION OF TIME',6x,   &
      &       f12.7,' MINS, OR',f10.2,' SECS, OR',f9.6,' RADIANS'/       &
-     &       '  SOLAR CONSTANT',8X,F12.7,' (DISTANCE AJUSTED)'//)
+     &       '  SOLAR CONSTANT',8X,F12.7,' (DISTANCE AJUSTED)'/
+
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! print check for new option for solar constant frequency ( isolf ) 
+!! solcin is added for print
+
+     &       '  check : INPUT SOLAR CONSTANT',8X,F12.7,' (INPUT)'//)
 
 !
       return

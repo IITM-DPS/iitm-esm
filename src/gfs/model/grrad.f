@@ -12,7 +12,7 @@
 !         input:                                                       !
 !           ( si, NLAY, iflip, idate, jdate, ICTM, ISOL, ICO2,         !
 !             IAER, IALB, IEMS, ICWP, NP3D, isubcsw, isubclw,          !
-!             iovrsw, iovrlw, me )                                     !
+!             iovrsw, iovrlw, me, MNYEAR, ISOLF )                      !
 !         output:                                                      !
 !           ( none )                                                   !
 !                                                                      !
@@ -104,6 +104,9 @@
 !                    surface downward fluxes to the output. (vis-nir;  !
 !                    direct -diffused)                                 !
 !                                                                      !
+!        2023     Dr. Rashmi Kakatkar - added the ISOLF option for     !
+!                     freqency of solar constant data                  !
+!                     ISOLF=1 for yearly and ISOLF=2 for monthly data  !                   
 !!!!!  ==========================================================  !!!!!
 !!!!!                       end descriptions                       !!!!!
 !!!!!  ==========================================================  !!!!!
@@ -153,9 +156,13 @@
       real (kind=kind_phys), parameter :: amdo3   = con_amd/con_amo3
       parameter ( QMIN=1.0e-10, QME5=1.0e-20,QME6=1.0e-20,EPSQ=1.0e-12 )
 
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! monthsol: data input control variable is added for new option for solar constant frequency ( isolf ) 
+
 !  ---  data input control variables
       integer :: irad1st=1,   month0=0,   iyear0=0,   monthd=0
       integer ::j,k
+      integer :: monthsol=0
 !  ---  lw surface air/ground interface temperature setting variable
 
       logical :: prnco2 = .false.
@@ -350,11 +357,15 @@
         initialized=.true.
       end subroutine init_grrad
 
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! mnyear added for ghg update (i.e. update in radiation_gases.f code )
+!! new option for solar constant frequency ( isolf ) is added
+
       subroutine radinit                                                &
 !  ---  inputs:
      &     ( si, NLAY, iflip, idate, jdate, ICTM, ISOL, ICO2,           &
      &       IAER, IALB, IEMS, ICWP, NP3D, isubcsw, isubclw,            &
-     &       iovrsw, iovrlw, me )
+     &       iovrsw, iovrlw, me, MNYEAR, ISOLF )
 
 ! =================   subprogram documentation block   ================ !
 !                                                                       !
@@ -397,6 +408,11 @@
 !                             extrapolation to match the fcst time.     !
 !   ISOL             :=0: use a fixed solar constant value              !
 !                     =1: use 11-year cycle solar constant table        !
+!!!!! edit by Dr. Rashmi Kakatkar :                                     !
+!! new option for solar constant frequency ( isolf ) is added           !
+!  ---  isolf controls solar constant data frequency                    !
+!   ISOLF            :=1: use yearly varying solar constant             !
+!                    :=2: use monthly varying solar constant            !
 !   ICO2             :=0: use prescribed global mean co2 (old  oper)    !
 !                     =1: use observed co2 annual mean value only       !
 !                     =2: use obs co2 monthly data with 2-d variation   !
@@ -442,9 +458,13 @@
 !
       implicit none
 
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! mnyear added for ghg update (i.e. update in radiation_gases.f code )
+!! new option for solar constant frequency ( isolf ) is added
+
       integer, intent(in) :: NLAY, iflip, NP3D, ICTM, ISOL, ICO2, ICWP, &
      &                       IALB, IEMS, IAER, me, isubcsw, isubclw,    &
-     &                       iovrsw, iovrlw
+     &                       iovrsw, iovrlw, MNYEAR, ISOLF
       integer, intent(in) :: idate(:), jdate(:)
 
       real (kind=kind_phys), intent(in) :: si(:)
@@ -463,6 +483,14 @@
       iyear = jdate(1)
       month = jdate(2)
 
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! check for grrad fcst year and month during model run 
+        if (me == 0) then
+          print *,' check in grrad '   
+          print *,' iyear = fcst year = ', iyear    
+          print *,' month = fcst month = ', month
+        endif
+
 !  --- ...  set up time stamp used for green house gases (** currently co2 only)
 
       if ( ICTM==0 .or. ICTM==-2 ) then ! get external data at initial condition time
@@ -478,10 +506,16 @@
         if (me == 0) then
           print *,' NEW RADIATION PROGRAM STRUCTURES BECAME OPER. ',    &
      &            '  May 01 2007'
+
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! mnyear added for ghg update (i.e. update in radiation_gases.f code )
+!! new option for solar constant frequency ( isolf ) is added
+
           print *,' - Selected Control Flag settings: ICTM=',ictm,      &
      &            ' ISOL=',isol,' ICO2=',ico2,' NP3D=',np3d,' ICWP=',   &
      &            icwp,' IALB=',ialb,' IEMS=',iems,' IAER=',iaer,       &
-     &            ' ISUBC_LW=',isubclw,' ISUBC_SW=',isubcsw
+     &            ' ISUBC_LW=',isubclw,' ISUBC_SW=',isubcsw,            &
+     &            ' MNYEAR=',mnyear,' ISOLF=',isolf 
 
           if ( ICTM==0 .or. ICTM==-2 ) then
             print *,'   Data usage is limited by initial condition ',   &
@@ -542,7 +576,10 @@
       if ( monthd /= imdat ) then
         monthd = imdat
 
-        call gasinit ( iydat, imdat, ICTM, ICO2, me )
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! mnyear added for ghg update (i.e. update in radiation_gases.f code )
+
+        call gasinit ( iydat, imdat, ICTM, ICO2, me, MNYEAR )
 
         prnco2 = .true.
       else
@@ -551,18 +588,66 @@
 
 !  --- ...  call astronomy initialization routine
 
+        if (me == 0) then
+          print *,' astronomy data read '   
+        endif
+
+
+!!!!! edit by Dr. Rashmi Kakatkar :
+!! new option for solar constant frequency ( isolf ) is added
+!! month and ISOLF are added in input for ISOLF option
+
       if ( ISOL == 0 ) then
 
         if ( irad1st == 1) then
-          call solinit ( ISOL, iyear, iydat, me )
+          call solinit ( ISOL, iyear, iydat, me, month, ISOLF )
         endif
 
       else
 
-        if ( iyear0 /= iyear ) then
-          iyear0 = iyear
-          call solinit ( ISOL, iyear, iydat, me )
+        if (me == 0) then
+          print *,' check : ISOL /= 0 then loop'   
         endif
+
+        if ( ISOLF == 1 ) then
+          if (me == 0) then
+            print *,' check : ISOLF = 1 loop '   
+          endif
+
+           if ( iyear0 /= iyear ) then
+              if (me == 0) then
+                print *,' iyear0 = ', iyear0   
+                print *,' iyear = ', iyear   
+                print *,' month = ', month   
+                print *,' iyear0 /= iyear then loop '   
+              endif
+
+          iyear0 = iyear
+            call solinit ( ISOL, iyear, iydat, me, month, ISOLF )
+           endif
+        endif
+ 
+        if ( ISOLF == 2 ) then
+          if (me == 0) then
+            print *,' check : ISOLF = 2 loop '   
+          endif
+
+              if (me == 0) then
+                print *,' iyear = ', iyear   
+                print *,' monthsol = ', monthsol   
+                print *,' month = ', month   
+!                print *,' monthsol /= month then loop '   
+              endif
+           if ( monthsol /= month ) then
+              if (me == 0) then
+                print *,' monthsol /= month then loop '   
+              endif
+
+            monthsol = month
+            call solinit ( ISOL, iyear, iydat, me, month, ISOLF )
+           endif
+        endif
+ 
 
       endif
 
